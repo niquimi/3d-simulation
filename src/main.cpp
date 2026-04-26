@@ -1,12 +1,19 @@
-#include <iostream>
+#include <Windows.h>
 #include "physics/PhysicsWorld.hpp"
+#include "renderer/Camera.hpp"
+#include "platform/Window.hpp"
 
-int main() {
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
+
     PhysicsWorld world(10.0f);
-    for (int i = 0; i < 300; i++) {
-        world.update(1.0f / 60.0f);
-        Vec3 p = world.getSphere().position;
-        std::cout << "Sphere Position Y: " << p.y << std::endl;
-    }
+
+    Camera cam;
+    cam.position = Vec3(0, 0, -25);
+    cam.target = Vec3(0, 0, 0);
+    cam.focalPoint = 500.0f;
+
+    Window window(hInstance, &world, &cam);
+    window.run();
+
     return 0;
 }

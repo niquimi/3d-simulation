@@ -13,6 +13,9 @@ static void drawLine(HDC hdc, POINT a, POINT b) {
 
 void drawCube(HDC hdc, float h, const Camera& cam, int w, int screenH) {
 
+    HPEN pen = CreatePen(PS_SOLID, 1, RGB(255, 255, 255));
+    HGDIOBJ oldPen = SelectObject(hdc, pen);
+
     Vec3 v[8] = {
         {-h,-h,-h}, { h,-h,-h}, { h, h,-h}, {-h, h,-h},
         {-h,-h, h}, { h,-h, h}, { h, h, h}, {-h, h, h}
@@ -37,6 +40,9 @@ void drawCube(HDC hdc, float h, const Camera& cam, int w, int screenH) {
 
         drawLine(hdc, a, b);
     }
+
+    SelectObject(hdc, oldPen);
+    DeleteObject(pen);
 }
 
 void drawSphere(HDC hdc, const RigidBody& sphere, const Camera& cam, int w, int screenH) {
