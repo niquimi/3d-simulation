@@ -4,8 +4,7 @@
 
 struct PhysicsWorld {
     RigidBody sphere;
-    std::
-    array<Plane, 6> planes;
+    std::array<Plane, 6> planes;
     Vec3 gravity;
     float accumulator;
     float fixedDt;

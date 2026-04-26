@@ -33,7 +33,7 @@ void PhysicsWorld::step(float dt) {
     sphere.velocity += acceleration * dt;
     sphere.position += sphere.velocity * dt;
 
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < planes.size()/2; i++) {
         for (const Plane& plane : planes) {
             CollisionManifold m = sphereVsPlane(sphere, plane);
             if (m.hit) {
