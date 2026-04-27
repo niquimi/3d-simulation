@@ -1,18 +1,20 @@
 #include "PhysicsWorld.hpp"
 
 PhysicsWorld::PhysicsWorld(float h)
-    : sphere(Vec3(0, 0, 0), 1.0f, 0.5f, 0.8f),
+    : sphere(Vec3(0, 0, 0), 1.0f, 1.0f, 0.8f, 0.05f),
       gravity(0.0f, -9.81f, 0.0f),
       accumulator(0.0f),
-      fixedDt(1.0f / 120.0f)
+      fixedDt(1.0f / 120.0f),
+      drag(0.05f)
 {
+    sphere.velocity = Vec3(3.0f, 6.0f, -5.0f);
     // Planos del cubo
-    planes[0] = { Vec3(0, -h, 0), Vec3(0, 1, 0) };   // suelo
-    planes[1] = { Vec3(0,  h, 0), Vec3(0,-1, 0) };   // techo
-    planes[2] = { Vec3(-h, 0, 0), Vec3(1, 0, 0) };   // izquierda
-    planes[3] = { Vec3( h, 0, 0), Vec3(-1,0, 0) };   // derecha
-    planes[4] = { Vec3(0, 0,  h), Vec3(0, 0,-1) };   // frente
-    planes[5] = { Vec3(0, 0, -h), Vec3(0, 0, 1) };   // fondo
+    planes[0] = { Vec3(0, -h, 0), Vec3(0, 1, 0)};   // suelo
+    planes[1] = { Vec3(0,  h, 0), Vec3(0,-1, 0)};   // techo
+    planes[2] = { Vec3(-h, 0, 0), Vec3(1, 0, 0)};   // izquierda
+    planes[3] = { Vec3( h, 0, 0), Vec3(-1,0, 0)};   // derecha
+    planes[4] = { Vec3(0, 0,  h), Vec3(0, 0,-1)};   // frente
+    planes[5] = { Vec3(0, 0, -h), Vec3(0, 0, 1)};   // fondo
 }
 
 void PhysicsWorld::update(float realDt) {
@@ -28,6 +30,7 @@ void PhysicsWorld::step(float dt) {
     sphere.clearForces();
 
     sphere.applyForce(gravity * sphere.mass);
+    sphere.applyForce(sphere.velocity * -drag);
 
     Vec3 acceleration = sphere.getAcceleration();
     sphere.velocity += acceleration * dt;

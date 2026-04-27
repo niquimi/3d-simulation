@@ -65,7 +65,7 @@ LRESULT CALLBACK Window::WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 
         // Dibujar en el buffer
         clear(memDC, rc);
-        drawCube(memDC, 10.0f, *window->cam, w, h);
+        drawCube(memDC, 5.0f, *window->cam, w, h);
         drawSphere(memDC, window->world->getSphere(), *window->cam, w, h);
 
         // Volcar buffer a pantalla de golpe

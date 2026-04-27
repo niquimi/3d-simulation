@@ -24,4 +24,7 @@ void resolveCollision(RigidBody& sphere, const CollisionManifold& manifold) {
         // Reflect velocity
         sphere.velocity -= (1.0f + sphere.restitution) * vn * manifold.normal;
     }
+
+    Vec3 tangential = sphere.velocity - sphere.velocity.dot(manifold.normal) * manifold.normal;
+    sphere.velocity -= tangential * sphere.friction;
 }

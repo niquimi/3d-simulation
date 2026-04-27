@@ -9,6 +9,8 @@ struct PhysicsWorld {
     float accumulator;
     float fixedDt;
 
+    float drag;
+
     PhysicsWorld(float halfSize);
 
     void update(float realDt);
