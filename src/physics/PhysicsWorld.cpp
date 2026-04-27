@@ -5,16 +5,11 @@ PhysicsWorld::PhysicsWorld(float h)
       gravity(0.0f, -9.81f, 0.0f),
       accumulator(0.0f),
       fixedDt(1.0f / 120.0f),
-      drag(0.05f)
+      drag(0.05f),
+      initialPosition(Vec3(0, 0, 0)),
+      initialVelocity(Vec3(0, 0, 0))
 {
-    sphere.velocity = Vec3(3.0f, 6.0f, -5.0f);
-    // Planos del cubo
-    planes[0] = { Vec3(0, -h, 0), Vec3(0, 1, 0)};   // suelo
-    planes[1] = { Vec3(0,  h, 0), Vec3(0,-1, 0)};   // techo
-    planes[2] = { Vec3(-h, 0, 0), Vec3(1, 0, 0)};   // izquierda
-    planes[3] = { Vec3( h, 0, 0), Vec3(-1,0, 0)};   // derecha
-    planes[4] = { Vec3(0, 0,  h), Vec3(0, 0,-1)};   // frente
-    planes[5] = { Vec3(0, 0, -h), Vec3(0, 0, 1)};   // fondo
+    setCubeSize(h);
 }
 
 void PhysicsWorld::update(float realDt) {
@@ -45,6 +40,41 @@ void PhysicsWorld::step(float dt) {
             }
         }
     }
+}
+
+void PhysicsWorld::setCubeSize(float h) {
+    planes[0] = { Vec3(0, -h, 0), Vec3(0,  1, 0) };
+    planes[1] = { Vec3(0,  h, 0), Vec3(0, -1, 0) };
+    planes[2] = { Vec3(-h, 0, 0), Vec3( 1, 0, 0) };
+    planes[3] = { Vec3( h, 0, 0), Vec3(-1, 0, 0) };
+    planes[4] = { Vec3(0, 0,  h), Vec3(0, 0, -1) };
+    planes[5] = { Vec3(0, 0, -h), Vec3(0, 0,  1) };
+}
+
+void PhysicsWorld::setDrag(float d) {
+    drag = d;
+}
+
+void PhysicsWorld::setSpherePosition(const Vec3& pos) {
+    sphere.position = pos;
+}
+
+void PhysicsWorld::setSphereVelocity(const Vec3& vel) {
+    sphere.velocity = vel;
+}
+
+void PhysicsWorld::setSphereRestitution(float r) {
+    sphere.restitution = r;
+}
+
+void PhysicsWorld::setSphereFriction(float f) {
+    sphere.friction = f;
+}
+
+void PhysicsWorld::reset() {
+    sphere.position = initialPosition;
+    sphere.velocity = initialVelocity;
+    accumulator = 0.0f;
 }
 
 const RigidBody& PhysicsWorld::getSphere() const {

@@ -17,6 +17,17 @@ struct PhysicsWorld {
 
     const RigidBody& getSphere() const;
 
+    void setCubeSize(float halfSize);
+    void setDrag(float d);
+    void setSpherePosition(const Vec3& pos);
+    void setSphereVelocity(const Vec3& vel);
+    void setSphereRestitution(float r);
+    void setSphereFriction(float f);
+    void reset();
+
     private:
+    Vec3 initialPosition;
+    Vec3 initialVelocity;
+
     void step(float dt);
 };
