@@ -7,7 +7,8 @@ PhysicsWorld::PhysicsWorld(float h)
       fixedDt(1.0f / 120.0f),
       drag(0.05f),
       initialPosition(Vec3(0, 0, 0)),
-      initialVelocity(Vec3(0, 0, 0))
+      initialVelocity(Vec3(0, 0, 0)),
+      cubeHalfSize(h)
 {
     setCubeSize(h);
 }
@@ -43,6 +44,7 @@ void PhysicsWorld::step(float dt) {
 }
 
 void PhysicsWorld::setCubeSize(float h) {
+    cubeHalfSize = h;
     planes[0] = { Vec3(0, -h, 0), Vec3(0,  1, 0) };
     planes[1] = { Vec3(0,  h, 0), Vec3(0, -1, 0) };
     planes[2] = { Vec3(-h, 0, 0), Vec3( 1, 0, 0) };
@@ -79,4 +81,8 @@ void PhysicsWorld::reset() {
 
 const RigidBody& PhysicsWorld::getSphere() const {
     return sphere;
+}
+
+const float PhysicsWorld::getCubeSize() const {
+    return cubeHalfSize;
 }

@@ -8,6 +8,7 @@ struct PhysicsWorld {
     Vec3 gravity;
     float accumulator;
     float fixedDt;
+    float cubeHalfSize;
 
     float drag;
 
@@ -24,6 +25,8 @@ struct PhysicsWorld {
     void setSphereRestitution(float r);
     void setSphereFriction(float f);
     void reset();
+
+    const float getCubeSize() const;
 
     private:
     Vec3 initialPosition;
