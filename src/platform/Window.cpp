@@ -66,7 +66,7 @@ LRESULT CALLBACK Window::WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
         // Dibujar en el buffer
         clear(memDC, rc);
         drawCube(memDC, window->world->getCubeSize(), *window->cam, w, h);
-        drawSphere(memDC, window->world->getSphere(), *window->cam, w, h);
+        drawSpheres(memDC, window->world->getSpheres(), *window->cam, w, h);
 
         // Volcar buffer a pantalla de golpe
         BitBlt(hdc, 0, 0, w, h, memDC, 0, 0, SRCCOPY);

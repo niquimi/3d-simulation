@@ -1,16 +1,25 @@
 #include "PhysicsWorld.hpp"
 
 PhysicsWorld::PhysicsWorld(float h)
-    : sphere(Vec3(0, 0, 0), 1.0f, 1.0f, 0.8f, 0.05f),
-      gravity(0.0f, -9.81f, 0.0f),
+    : gravity(0.0f, -9.81f, 0.0f),
       accumulator(0.0f),
       fixedDt(1.0f / 120.0f),
       drag(0.05f),
-      initialPosition(Vec3(0, 0, 0)),
-      initialVelocity(Vec3(0, 0, 0)),
       cubeHalfSize(h)
 {
     setCubeSize(h);
+}
+
+void PhysicsWorld::addSphere(Vec3 position, float mass, float radius, float restitution, float friction) {
+    spheres.emplace_back(position, mass, radius, restitution, friction);
+}
+
+void PhysicsWorld::clearSpheres() {
+    spheres.clear();
+}
+
+const std::vector<RigidBody>& PhysicsWorld::getSpheres() const {
+    return spheres;
 }
 
 void PhysicsWorld::update(float realDt) {
@@ -23,22 +32,32 @@ void PhysicsWorld::update(float realDt) {
 
 void PhysicsWorld::step(float dt) {
 
-    sphere.clearForces();
+    // Forces + integration
+    for (RigidBody& s : spheres) {
+        s.clearForces();
+        s.applyForce(gravity * s.mass);
+        s.applyForce(s.velocity * -drag);
 
-    sphere.applyForce(gravity * sphere.mass);
-    sphere.applyForce(sphere.velocity * -drag);
+        Vec3 acceleration = s.getAcceleration();
+        s.velocity += acceleration * dt;
+        s.position += s.velocity * dt;
+    }
 
-    Vec3 acceleration = sphere.getAcceleration();
-    sphere.velocity += acceleration * dt;
-    sphere.position += sphere.velocity * dt;
-
-    for (int i = 0; i < planes.size()/2; i++) {
-        for (const Plane& plane : planes) {
-            CollisionManifold m = sphereVsPlane(sphere, plane);
-            if (m.hit) {
-                // Si hay colisión, resolverla
-                resolveCollision(sphere, m);
+    // Sphere-plane collision
+    for (RigidBody& s : spheres) {
+        for (int iter = 0; iter < 2; iter++) {
+            for (const Plane& plane : planes) {
+                CollisionManifold m = sphereVsPlane(s, plane);
+                if (m.hit) resolveCollision(s, m);
             }
+        }
+    }
+
+    // Sphere-sphere collision
+    for (int i = 0; i < (int)spheres.size(); i++) {
+        for (int j = i + 1; j < (int)spheres.size(); j++) {
+            CollisionManifold m = sphereVsSphere(spheres[i], spheres[j]);
+            if (m.hit) resolveSphereSphere(spheres[i], spheres[j], m);
         }
     }
 }
@@ -57,32 +76,35 @@ void PhysicsWorld::setDrag(float d) {
     drag = d;
 }
 
-void PhysicsWorld::setSpherePosition(const Vec3& pos) {
-    sphere.position = pos;
+void PhysicsWorld::setSpherePosition(int id, const Vec3& pos) {
+    if (id < 0 || id >= (int)spheres.size()) return;
+    spheres[id].position = pos;
 }
 
-void PhysicsWorld::setSphereVelocity(const Vec3& vel) {
-    sphere.velocity = vel;
+void PhysicsWorld::setSphereVelocity(int id, const Vec3& vel) {
+    if (id < 0 || id >= (int)spheres.size()) return;
+    spheres[id].velocity = vel;
 }
 
-void PhysicsWorld::setSphereRestitution(float r) {
-    sphere.restitution = r;
+void PhysicsWorld::setSphereRestitution(int id, float r) {
+    if (id < 0 || id >= (int)spheres.size()) return;
+    spheres[id].restitution = r;
 }
 
-void PhysicsWorld::setSphereFriction(float f) {
-    sphere.friction = f;
+void PhysicsWorld::setSphereFriction(int id, float f) {
+    if (id < 0 || id >= (int)spheres.size()) return;
+    spheres[id].friction = f;
 }
 
 void PhysicsWorld::reset() {
-    sphere.position = initialPosition;
-    sphere.velocity = initialVelocity;
+    spheres.clear();
     accumulator = 0.0f;
 }
 
-const RigidBody& PhysicsWorld::getSphere() const {
-    return sphere;
+const RigidBody& PhysicsWorld::getSphere(int id) const {
+    return spheres[id];
 }
 
-const float PhysicsWorld::getCubeSize() const {
+float PhysicsWorld::getCubeSize() const {
     return cubeHalfSize;
 }

@@ -1,4 +1,5 @@
 #include "Renderer.hpp"
+#include <vector>
 
 void clear(HDC hdc, RECT rc) {
     HBRUSH brush = CreateSolidBrush(RGB(0, 0, 0));
@@ -45,20 +46,24 @@ void drawCube(HDC hdc, float h, const Camera& cam, int w, int screenH) {
     DeleteObject(pen);
 }
 
-void drawSphere(HDC hdc, const RigidBody& sphere, const Camera& cam, int w, int screenH) {
-    POINT center = cam.projectPoint(sphere.position, w, screenH);
+void drawSpheres(HDC hdc, const std::vector<RigidBody>& spheres, const Camera& cam, int w, int screenH) {
+    
+    for (const RigidBody& sphere : spheres) {
 
-    if (center.x == -1) return;
+        POINT center = cam.projectPoint(sphere.position, w, screenH);
 
-    Vec3 rel = sphere.position - cam.position;
-    float z = rel.dot(cam.forward);
-    int screenRadius = (int)(cam.focalPoint * sphere.radius / z);
+        if (center.x == -1) continue;
 
-    Ellipse(
-        hdc,
-        center.x - screenRadius,
-        center.y - screenRadius,
-        center.x + screenRadius,
-        center.y + screenRadius
-    );
+        Vec3 rel = sphere.position - cam.position;
+        float z = rel.dot(cam.forward);
+        int screenRadius = (int)(cam.focalPoint * sphere.radius / z);
+
+        Ellipse(
+            hdc,
+            center.x - screenRadius,
+            center.y - screenRadius,
+            center.x + screenRadius,
+            center.y + screenRadius
+        );
+    }
 }

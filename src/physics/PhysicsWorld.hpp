@@ -1,9 +1,10 @@
 #pragma once
 #include "Collision.hpp"
 #include <array>
+#include <vector>
 
 struct PhysicsWorld {
-    RigidBody sphere;
+    std::vector<RigidBody> spheres;
     std::array<Plane, 6> planes;
     Vec3 gravity;
     float accumulator;
@@ -16,21 +17,21 @@ struct PhysicsWorld {
 
     void update(float realDt);
 
-    const RigidBody& getSphere() const;
+    void addSphere(Vec3 position, float mass, float radius, float restitution, float friction);
+    void clearSpheres();
+    const RigidBody& getSphere(int id) const;
+    const std::vector<RigidBody>& getSpheres() const;
 
     void setCubeSize(float halfSize);
     void setDrag(float d);
-    void setSpherePosition(const Vec3& pos);
-    void setSphereVelocity(const Vec3& vel);
-    void setSphereRestitution(float r);
-    void setSphereFriction(float f);
+    void setSpherePosition(int id, const Vec3& pos);
+    void setSphereVelocity(int id, const Vec3& vel);
+    void setSphereRestitution(int id, float r);
+    void setSphereFriction(int id, float f);
     void reset();
 
-    const float getCubeSize() const;
+    float getCubeSize() const;
 
     private:
-    Vec3 initialPosition;
-    Vec3 initialVelocity;
-
     void step(float dt);
 };
