@@ -80,6 +80,42 @@ LRESULT CALLBACK Window::WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
         return 0;
     }
 
+    case WM_LBUTTONDOWN: {
+        window->mouseDown = true;
+        window->lastMousePos.x = LOWORD(lParam);
+        window->lastMousePos.y = HIWORD(lParam);
+        SetCapture(hwnd);
+        return 0;
+    }
+
+    case WM_LBUTTONUP: {
+        window->mouseDown = false;
+        ReleaseCapture();
+        return 0;
+    }
+
+    case WM_MOUSEMOVE: {
+        if (window->mouseDown) {
+            POINT current;
+            current.x = LOWORD(lParam);
+            current.y = HIWORD(lParam);
+
+            float dx = (float)(current.x - window->lastMousePos.x);
+            float dy = (float)(current.y - window->lastMousePos.y);
+
+            window->cam->orbit(dx, dy);
+
+            window->lastMousePos = current;
+        }
+        return 0;
+    }
+
+    case WM_MOUSEWHEEL: {
+        float delta = (float)GET_WHEEL_DELTA_WPARAM(wParam);
+        window->cam->zoom(delta);
+        return 0;
+    }
+
     }
 
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
@@ -110,7 +146,7 @@ void Window::run() {
 
         // Update física
         world->update(dt);
-        cam->updateBasis();
+        cam->updatePosition();
 
         // Redibujar
         InvalidateRect(hwnd, NULL, FALSE);

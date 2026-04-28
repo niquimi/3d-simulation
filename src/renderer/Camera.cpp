@@ -1,4 +1,7 @@
 #include "Camera.hpp"
+#include <algorithm>
+
+constexpr float PI = 3.14159265359f;
 
 void Camera::updateBasis() {
     forward = (target - position).normalized();
@@ -8,6 +11,30 @@ void Camera::updateBasis() {
     right = forward.cross(worldUp).normalized();
     up = right.cross(forward);
 };
+
+void Camera::updatePosition() {
+    position.x = target.x + distance * cos(pitch) * sin(yaw);
+    position.y = target.y + distance * sin(pitch);
+    position.z = target.z + distance * cos(pitch) * cos(yaw);
+
+    updateBasis();
+}
+
+void Camera::orbit(float dx, float dy) {
+    yaw -= dx * sensitivity;
+    pitch += dy * sensitivity;
+
+    pitch = std::clamp(pitch, -PI/2 + 0.05f, PI/2 - 0.05f);
+
+    updatePosition();
+}
+
+void Camera::zoom(float delta) {
+    distance -= delta * zoomSpeed;
+    distance = std::clamp(distance, 1.0f, 20.0f);
+
+    updatePosition();
+}
 
 POINT Camera::projectPoint(const Vec3& worldPoint, int screenW, int screenH) const{
     

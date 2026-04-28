@@ -9,6 +9,9 @@ struct Window {
     Camera* cam;
     bool running;
 
+    bool mouseDown;
+    POINT lastMousePos;
+
     Window(HINSTANCE hInstance, PhysicsWorld* world, Camera* cam);
 
     void run();
