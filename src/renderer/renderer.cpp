@@ -1,5 +1,7 @@
 #include "Renderer.hpp"
 #include <vector>
+#include <algorithm>
+#include <cmath>
 
 void clear(HDC hdc, RECT rc) {
     HBRUSH brush = CreateSolidBrush(RGB(0, 0, 0));
@@ -65,5 +67,104 @@ void drawSpheres(HDC hdc, const std::vector<RigidBody>& spheres, const Camera& c
             center.x + screenRadius,
             center.y + screenRadius
         );
+    }
+}
+
+void drawSpheresRaycast(HDC hdc, const std::vector<RigidBody>& spheres, const Camera& cam, int w, int h, Vec3 lightDir) {
+    lightDir = lightDir.normalized();
+
+    // Z-buffer: un float por píxel, inicializado a infinito.
+    // Representa la t mínima (más cercana) que ha tocado cada píxel.
+    std::vector<float> zBuffer(w * h, std::numeric_limits<float>::infinity());
+
+    // Primera pasada: para cada píxel encontrar la esfera más cercana
+    // y guardar su índice y t en buffers auxiliares.
+    std::vector<int>   hitSphere(w * h, -1);
+    std::vector<float> hitT     (w * h, std::numeric_limits<float>::infinity());
+
+    for (int i = 0; i < (int)spheres.size(); i++) {
+        const RigidBody& sphere = spheres[i];
+
+        POINT center = cam.projectPoint(sphere.position, w, h);
+        if (center.x == -1) continue;
+
+        Vec3 rel = sphere.position - cam.position;
+        float z = rel.dot(cam.forward);
+        if (z <= 0.0f) continue;
+        int screenRadius = (int)(cam.focalPoint * sphere.radius / z);
+        if (screenRadius <= 0) continue;
+
+        int cx = (int)center.x;
+        int cy = (int)center.y;
+
+        int x0 = (std::max)(0, cx - screenRadius);
+        int x1 = (std::min)(w - 1, cx + screenRadius);
+        int y0 = (std::max)(0, cy - screenRadius);
+        int y1 = (std::min)(h - 1, cy + screenRadius);
+
+        for (int py = y0; py <= y1; py++) {
+            for (int px = x0; px <= x1; px++) {
+
+                float ndcX = (px - w * 0.5f) / cam.focalPoint;
+                float ndcY = (h * 0.5f - py) / cam.focalPoint;
+
+                Vec3 rayDir    = (cam.forward + cam.right * ndcX + cam.up * ndcY).normalized();
+                Vec3 rayOrigin = cam.position;
+
+                Vec3  oc = rayOrigin - sphere.position;
+                float b = 2.0f * oc.dot(rayDir);
+                float c = oc.dot(oc) - sphere.radius * sphere.radius;
+                float discriminant = b * b - 4.0f * c;
+                if (discriminant < 0.0f) continue;
+
+                float t = (-b - std::sqrt(discriminant)) * 0.5f;
+                if (t <= 0.0f) continue;
+
+                // Solo actualizamos si esta esfera está más cerca
+                // que cualquier otra que haya tocado este píxel antes.
+                int idx = py * w + px;
+                if (t < hitT[idx]) {
+                    hitT[idx]      = t;
+                    hitSphere[idx] = i;
+                }
+            }
+        }
+    }
+
+    // Segunda pasada: shading solo del píxel ganador (la esfera más cercana).
+    for (int py = 0; py < h; py++) {
+        for (int px = 0; px < w; px++) {
+
+            int idx = py * w + px;
+            if (hitSphere[idx] == -1) continue;  // ninguna esfera tocó este píxel
+
+            const RigidBody& sphere = spheres[hitSphere[idx]];
+
+            float ndcX = (px - w * 0.5f) / cam.focalPoint;
+            float ndcY = (h * 0.5f - py) / cam.focalPoint;
+
+            Vec3 rayDir    = (cam.forward + cam.right * ndcX + cam.up * ndcY).normalized();
+            Vec3 rayOrigin = cam.position;
+
+            float t        = hitT[idx];
+            Vec3  hitPoint = rayOrigin + rayDir * t;
+            Vec3  normal   = (hitPoint - sphere.position).normalized();
+
+            float ambient   = 0.15f;
+            float diffuse   = (std::max)(0.0f, normal.dot(lightDir));
+            Vec3  viewDir   = (rayOrigin - hitPoint).normalized();
+            Vec3  halfVec   = (lightDir + viewDir).normalized();
+            float specAngle = (std::max)(0.0f, normal.dot(halfVec));
+            float specular  = std::pow(specAngle, 48.0f);
+
+            Vec3  baseColor = sphere.color;
+            Vec3  specColor = Vec3(1.0f, 1.0f, 1.0f);
+
+            float r  = (std::min)(baseColor.x * (ambient + diffuse * 0.7f) + specular * 0.5f, 1.0f) * 255.0f;
+            float g  = (std::min)(baseColor.y * (ambient + diffuse * 0.7f) + specular * 0.5f, 1.0f) * 255.0f;
+            float b2 = (std::min)(baseColor.z * (ambient + diffuse * 0.7f) + specular * 0.5f, 1.0f) * 255.0f;
+
+            SetPixel(hdc, px, py, RGB((int)r, (int)g, (int)b2));
+        }
     }
 }

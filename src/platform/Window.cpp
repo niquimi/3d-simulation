@@ -63,10 +63,12 @@ LRESULT CALLBACK Window::WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
         HBITMAP memBitmap = CreateCompatibleBitmap(hdc, w, h);
         HGDIOBJ oldBitmap = SelectObject(memDC, memBitmap);
 
+        Vec3 lightDir = Vec3(0.0f, 1.0f, 0.5f);
+
         // Dibujar en el buffer
         clear(memDC, rc);
         drawCube(memDC, window->world->getCubeSize(), *window->cam, w, h);
-        drawSpheres(memDC, window->world->getSpheres(), *window->cam, w, h);
+        drawSpheresRaycast(memDC, window->world->getSpheres(), *window->cam, w, h, lightDir);
 
         // Volcar buffer a pantalla de golpe
         BitBlt(hdc, 0, 0, w, h, memDC, 0, 0, SRCCOPY);

@@ -11,6 +11,8 @@ struct RigidBody {
     float restitution;
     float friction;
 
+    Vec3 color;
+
 private:
     Vec3 accumulatedForce;
 
@@ -19,7 +21,8 @@ public:
               float mass,
               float radius,
               float restitution,
-              float friction);
+              float friction
+            );
 
     void applyForce(const Vec3& force);
     void clearForces();

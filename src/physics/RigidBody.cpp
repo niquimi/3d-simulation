@@ -4,7 +4,8 @@ RigidBody::RigidBody(const Vec3& position,
                  float mass,
                  float radius,
                  float restitution,
-                 float friction)
+                 float friction
+                 )
     : position(position),
       velocity(Vec3::zero()),
       acceleration(Vec3::zero()),
@@ -12,7 +13,8 @@ RigidBody::RigidBody(const Vec3& position,
       radius(radius),
       restitution(restitution),
       accumulatedForce(Vec3::zero()),
-      friction(friction)
+      friction(friction),
+      color(Vec3(1.0f, 1.0f, 1.0f))
 {
 }
 
