@@ -58,24 +58,29 @@ LRESULT CALLBACK Window::WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
         int w = rc.right - rc.left;
         int h = rc.bottom - rc.top;
 
-        // Crear buffer en memoria
+        BITMAPINFO bmi = {};
+        bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+        bmi.bmiHeader.biWidth = w;
+        bmi.bmiHeader.biHeight = h;
+        bmi.bmiHeader.biPlanes = 1;
+        bmi.bmiHeader.biBitCount = 32;
+        bmi.bmiHeader.biCompression = BI_RGB;
+
+        uint8_t* pixels = nullptr;
         HDC memDC = CreateCompatibleDC(hdc);
-        HBITMAP memBitmap = CreateCompatibleBitmap(hdc, w, h);
-        HGDIOBJ oldBitmap = SelectObject(memDC, memBitmap);
+        HBITMAP dib = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, (void**)&pixels, NULL, 0);
+        HGDIOBJ oldBitmap = SelectObject(memDC, dib);
 
-        Vec3 lightDir = Vec3(0.0f, 1.0f, 0.5f);
-
-        // Dibujar en el buffer
-        clear(memDC, rc);
+        memset(pixels, 0, w * h * 4);
         drawCube(memDC, window->world->getCubeSize(), *window->cam, w, h);
-        drawSpheresRaycast(memDC, window->world->getSpheres(), *window->cam, w, h, lightDir);
+        drawSpheresRaycast(memDC, window->world->getSpheres(), *window->cam, w, h, Vec3(1.0f, 2.0f, -1.0f), pixels);
 
         // Volcar buffer a pantalla de golpe
         BitBlt(hdc, 0, 0, w, h, memDC, 0, 0, SRCCOPY);
 
         // Limpiar
         SelectObject(memDC, oldBitmap);
-        DeleteObject(memBitmap);
+        DeleteObject(dib);
         DeleteDC(memDC);
 
         EndPaint(hwnd, &ps);

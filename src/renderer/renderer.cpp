@@ -58,7 +58,8 @@ void drawSpheres(HDC hdc, const std::vector<RigidBody>& spheres, const Camera& c
 
         Vec3 rel = sphere.position - cam.position;
         float z = rel.dot(cam.forward);
-        int screenRadius = (int)(cam.focalPoint * sphere.radius / z);
+        float radiusF = cam.focalPoint * sphere.radius / z;
+        int screenRadius = (int)(std::ceil(radiusF));
 
         Ellipse(
             hdc,
@@ -70,7 +71,7 @@ void drawSpheres(HDC hdc, const std::vector<RigidBody>& spheres, const Camera& c
     }
 }
 
-void drawSpheresRaycast(HDC hdc, const std::vector<RigidBody>& spheres, const Camera& cam, int w, int h, Vec3 lightDir) {
+void drawSpheresRaycast(HDC hdc, const std::vector<RigidBody>& spheres, const Camera& cam, int w, int h, Vec3 lightDir, uint8_t* pixelBuffer) {
     lightDir = lightDir.normalized();
 
     // Z-buffer: un float por píxel, inicializado a infinito.
@@ -91,7 +92,8 @@ void drawSpheresRaycast(HDC hdc, const std::vector<RigidBody>& spheres, const Ca
         Vec3 rel = sphere.position - cam.position;
         float z = rel.dot(cam.forward);
         if (z <= 0.0f) continue;
-        int screenRadius = (int)(cam.focalPoint * sphere.radius / z);
+        float radiusF = cam.focalPoint * sphere.radius / z;
+        int screenRadius = (int)(std::ceil(radiusF));
         if (screenRadius <= 0) continue;
 
         int cx = (int)center.x;
@@ -131,6 +133,8 @@ void drawSpheresRaycast(HDC hdc, const std::vector<RigidBody>& spheres, const Ca
         }
     }
 
+    int stride = w * 4;
+
     // Segunda pasada: shading solo del píxel ganador (la esfera más cercana).
     for (int py = 0; py < h; py++) {
         for (int px = 0; px < w; px++) {
@@ -140,8 +144,8 @@ void drawSpheresRaycast(HDC hdc, const std::vector<RigidBody>& spheres, const Ca
 
             const RigidBody& sphere = spheres[hitSphere[idx]];
 
-            float ndcX = (px - w * 0.5f) / cam.focalPoint;
-            float ndcY = (h * 0.5f - py) / cam.focalPoint;
+            float ndcX = ((px + 0.5f) - w * 0.5f) / cam.focalPoint;
+            float ndcY = (h * 0.5f - (py + 0.5f)) / cam.focalPoint;
 
             Vec3 rayDir    = (cam.forward + cam.right * ndcX + cam.up * ndcY).normalized();
             Vec3 rayOrigin = cam.position;
@@ -160,11 +164,15 @@ void drawSpheresRaycast(HDC hdc, const std::vector<RigidBody>& spheres, const Ca
             Vec3  baseColor = sphere.color;
             Vec3  specColor = Vec3(1.0f, 1.0f, 1.0f);
 
-            float r  = (std::min)(baseColor.x * (ambient + diffuse * 0.7f) + specular * 0.5f, 1.0f) * 255.0f;
-            float g  = (std::min)(baseColor.y * (ambient + diffuse * 0.7f) + specular * 0.5f, 1.0f) * 255.0f;
-            float b2 = (std::min)(baseColor.z * (ambient + diffuse * 0.7f) + specular * 0.5f, 1.0f) * 255.0f;
+            float r  = (std::min)(baseColor.x * (ambient + diffuse * 0.7f) + specular * 0.5f, 1.0f);
+            float g  = (std::min)(baseColor.y * (ambient + diffuse * 0.7f) + specular * 0.5f, 1.0f);
+            float b2 = (std::min)(baseColor.z * (ambient + diffuse * 0.7f) + specular * 0.5f, 1.0f);
 
-            SetPixel(hdc, px, py, RGB((int)r, (int)g, (int)b2));
+            int bufferIdx = (h - 1 - py) * stride + px * 4;
+            pixelBuffer[bufferIdx] = (uint8_t)(b2 * 255.0f);
+            pixelBuffer[bufferIdx + 1] = (uint8_t)(g * 255.0f);
+            pixelBuffer[bufferIdx + 2] = (uint8_t)(r * 255.0f);
+            pixelBuffer[bufferIdx + 3] = 0;
         }
     }
 }
