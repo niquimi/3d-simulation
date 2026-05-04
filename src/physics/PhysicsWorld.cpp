@@ -5,17 +5,25 @@ PhysicsWorld::PhysicsWorld(float h)
       accumulator(0.0f),
       fixedDt(1.0f / 120.0f),
       drag(0.05f),
-      cubeHalfSize(h)
+      cubeHalfSize(h),
+      spatialHash(0.9f, 1024),
+      maxSphereRadius(0.0f)
 {
     setCubeSize(h);
 }
 
 void PhysicsWorld::addSphere(Vec3 position, float mass, float radius, float restitution, float friction) {
     spheres.emplace_back(position, mass, radius, restitution, friction);
+
+    if (radius > maxSphereRadius) maxSphereRadius = radius;
+    if (radius * 2.0f * 1.5f > spatialHash.cellSize) {
+        spatialHash.cellSize = radius * 2.0f * 1.5f;
+    }
 }
 
 void PhysicsWorld::clearSpheres() {
     spheres.clear();
+    maxSphereRadius = 0.0f;
 }
 
 const std::vector<RigidBody>& PhysicsWorld::getSpheres() const {
@@ -53,11 +61,25 @@ void PhysicsWorld::step(float dt) {
         }
     }
 
-    // Sphere-sphere collision
+    spatialHash.clear();
+
     for (int i = 0; i < (int)spheres.size(); i++) {
-        for (int j = i + 1; j < (int)spheres.size(); j++) {
-            CollisionManifold m = sphereVsSphere(spheres[i], spheres[j]);
-            if (m.hit) resolveSphereSphere(spheres[i], spheres[j], m);
+        spatialHash.insert(i, spheres[i].position);
+    }
+
+    // Sphere-sphere collision (iterate a bit for stability, like planes)
+    for (int iter = 0; iter < 2; iter++) {
+        for (int i = 0; i < (int)spheres.size(); i++) {
+            std::vector<int> candidates;
+            const float queryRadius = spheres[i].radius + maxSphereRadius;
+            spatialHash.query(spheres[i].position, queryRadius, candidates);
+
+            for (int j : candidates) {
+                if (j <= i) continue;
+
+                CollisionManifold m = sphereVsSphere(spheres[i], spheres[j]);
+                if (m.hit) resolveSphereSphere(spheres[i], spheres[j], m);
+            }
         }
     }
 }
@@ -99,6 +121,7 @@ void PhysicsWorld::setSphereFriction(int id, float f) {
 void PhysicsWorld::reset() {
     spheres.clear();
     accumulator = 0.0f;
+    maxSphereRadius = 0.0f;
 }
 
 const RigidBody& PhysicsWorld::getSphere(int id) const {

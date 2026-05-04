@@ -1,5 +1,6 @@
 #pragma once
 #include "Collision.hpp"
+#include "SpatialHash.hpp"
 #include <array>
 #include <vector>
 
@@ -10,6 +11,8 @@ struct PhysicsWorld {
     float accumulator;
     float fixedDt;
     float cubeHalfSize;
+    SpatialHash spatialHash;
+    float maxSphereRadius;
 
     float drag;
 

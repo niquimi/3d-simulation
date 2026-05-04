@@ -21,7 +21,12 @@ CollisionManifold sphereVsSphere(const RigidBody& a, const RigidBody& b) {
     float radiiSum = a.radius + b.radius;
     if (dist < radiiSum) {
         m.hit = true;
-        m.normal = delta.normalized();
+        // Avoid NaNs when both centers coincide.
+        if (dist > 1e-8f) {
+            m.normal = delta / dist;
+        } else {
+            m.normal = Vec3(1.0f, 0.0f, 0.0f);
+        }
         m.penetration = radiiSum - dist;
     }
     return m;    
